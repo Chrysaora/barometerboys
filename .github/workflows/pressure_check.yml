@@ -1,0 +1,70 @@
+name: Pressure check
+
+on:
+  schedule:
+    # Runs hourly. The script itself decides whether it's currently ~8 PM
+    # local time for any given location before doing real work.
+    - cron: "0 * * * *"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Bypass the 8PM-local gating and dedup check"
+        type: boolean
+        default: true
+      only_user:
+        description: "Only check this one person (name must match users.json exactly). Leave blank for all."
+        type: string
+        default: ""
+      dry_run:
+        description: "Do everything except actually send the ntfy notification"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pressure-check
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run pressure check
+        env:
+          USERS_JSON: ${{ secrets.USERS_JSON }}
+          USER_TOPICS: ${{ secrets.USER_TOPICS }}
+          NTFY_SERVER: ${{ vars.NTFY_SERVER }}
+          PAGES_BASE_URL: ${{ vars.PAGES_BASE_URL }}
+        run: |
+          ARGS=""
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            if [ "${{ inputs.force }}" = "true" ]; then ARGS="$ARGS --force"; fi
+            if [ "${{ inputs.dry_run }}" = "true" ]; then ARGS="$ARGS --dry-run"; fi
+            if [ -n "${{ inputs.only_user }}" ]; then ARGS="$ARGS --only-user \"${{ inputs.only_user }}\""; fi
+          fi
+          eval python3 scripts/check_pressure.py $ARGS
+
+      - name: Commit updated state and alert pages
+        run: |
+          git config user.name "pressure-watch-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add state/ docs/
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "Update pressure watch state [skip ci]"
+            git push
+          fi
