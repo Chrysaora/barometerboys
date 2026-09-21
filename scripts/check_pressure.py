@@ -239,11 +239,18 @@ def fetch_hourly_pressure(lat: float, lon: float, tz: str):
     times = data["hourly"]["time"]
     pressures_hpa = data["hourly"]["surface_pressure"]
 
+    # Open-Meteo returns these timestamps as local time for the requested
+    # `tz`, but WITHOUT a UTC offset attached (e.g. "2026-09-22T05:00") --
+    # datetime.fromisoformat parses that as a naive datetime. Everything
+    # else in this script (day_window, local_now, etc.) is timezone-aware,
+    # and comparing naive to aware datetimes raises a TypeError, so we
+    # attach the same zone here explicitly.
+    zone = ZoneInfo(tz)
     series = []
     for t, p in zip(times, pressures_hpa):
         if p is None:
             continue
-        dt = datetime.fromisoformat(t)
+        dt = datetime.fromisoformat(t).replace(tzinfo=zone)
         series.append((dt, p * HPA_TO_INHG))
     return series
 
