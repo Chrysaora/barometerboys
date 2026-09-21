@@ -1,4 +1,10 @@
 {
+  "Amsterdam": {
+    "display_name": "Amsterdam, North Holland, NL",
+    "lat": 52.37403,
+    "lon": 4.88969,
+    "timezone": "Europe/Amsterdam"
+  },
   "Brooklyn, NY, US": {
     "display_name": "Brooklyn, New York, US",
     "lat": 40.6501,
