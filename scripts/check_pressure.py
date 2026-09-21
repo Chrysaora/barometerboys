@@ -158,22 +158,47 @@ def fmt_date(d: date) -> str:
 # Geocoding
 # ---------------------------------------------------------------------------
 
-def geocode_location(location: str, cache: dict) -> dict:
-    if location in cache:
-        return cache[location]
-
+def _geocode_query(query: str):
+    """One attempt against the Open-Meteo geocoding API. Returns the top
+    result dict, or None if there were no matches."""
     resp = requests.get(
         GEOCODE_URL,
-        params={"name": location, "count": 1, "language": "en", "format": "json"},
+        params={"name": query, "count": 1, "language": "en", "format": "json"},
         timeout=20,
     )
     resp.raise_for_status()
     data = resp.json()
     results = data.get("results") or []
-    if not results:
-        raise ValueError(f"No geocoding match for location: {location!r}")
+    return results[0] if results else None
 
-    r = results[0]
+
+def geocode_location(location: str, cache: dict) -> dict:
+    if location in cache:
+        return cache[location]
+
+    # Open-Meteo's geocoding search is inconsistent about "City, Region,
+    # Country" strings -- some match fine as-is (e.g. "Brooklyn, NY, US"),
+    # others return zero results with the qualifiers attached (e.g.
+    # "Amsterdam, Netherlands" finds nothing, but "Amsterdam" alone finds
+    # it immediately). So: try the full string first, and if that comes up
+    # empty, retry with progressively fewer trailing ", Region"/", Country"
+    # segments stripped off, down to just the city name.
+    parts_to_try = [p.strip() for p in location.split(",")]
+    queries = [location] + [
+        ", ".join(parts_to_try[:i]) for i in range(len(parts_to_try) - 1, 0, -1)
+    ]
+
+    r = None
+    for query in queries:
+        r = _geocode_query(query)
+        if r:
+            if query != location:
+                print(f"  [i] {location!r} found no direct match; used "
+                      f"simplified query {query!r} instead")
+            break
+
+    if not r:
+        raise ValueError(f"No geocoding match for location: {location!r}")
     parts = [r.get("name")]
     admin1 = r.get("admin1")
     country_code = r.get("country_code")
