@@ -1,1 +1,8 @@
-{}
+{
+  "Brooklyn, NY, US": {
+    "display_name": "Brooklyn, New York, US",
+    "lat": 40.6501,
+    "lon": -73.94958,
+    "timezone": "America/New_York"
+  }
+}
