@@ -4,7 +4,7 @@ on:
   schedule:
     # Runs hourly. The script itself decides whether it's currently ~8 PM
     # local time for any given location before doing real work.
-    - cron: "0 * * * *"
+    - cron: "17 0,2,18,20 * * *"
   workflow_dispatch:
     inputs:
       force:
