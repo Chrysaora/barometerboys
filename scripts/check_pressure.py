@@ -97,7 +97,8 @@ USER_TOPICS = _load_json_env("USER_TOPICS", {})
 DROP_THRESHOLD_INHG = 0.06
 WINDOW_HOURS = 5
 FORECAST_DAYS = 3
-TARGET_LOCAL_HOUR = 20  # 8 PM
+EVENING_WINDOW_START_HOUR = 18  # 6 PM
+EVENING_WINDOW_END_HOUR = 23    # 11 PM (exclusive)
 DAY_START_HOUR = 4  # a "day" runs 4:00 AM -> next day's 4:00 AM
 
 HPA_TO_INHG = 0.0295299830714
@@ -515,8 +516,8 @@ def main():
         local_now = datetime.now(tz)
         print(f"  local time: {local_now.strftime('%Y-%m-%d %H:%M %Z')}")
 
-        if not args.force and local_now.hour != TARGET_LOCAL_HOUR:
-            print(f"  not 8 PM local ({TARGET_LOCAL_HOUR}:00), skipping")
+        if not args.force and not (EVENING_WINDOW_START_HOUR <= local_now.hour < EVENING_WINDOW_END_HOUR):
+            print(f"  not evening yet ({EVENING_WINDOW_START_HOUR}:00-{EVENING_WINDOW_END_HOUR}:00 local), skipping")
             location_results[location] = None
             continue
 
