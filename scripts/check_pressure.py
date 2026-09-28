@@ -496,6 +496,16 @@ def main():
     run_utc_date = datetime.utcnow().strftime("%Y-%m-%d")
     any_state_changed = False
 
+    # Keep geocode_cache.json in sync with USERS_JSON automatically: drop any
+    # cached location nobody currently lives in, rather than letting stale
+    # entries (from people who've since moved) accumulate forever.
+    stale = set(geocode_cache) - set(unique_locations)
+    if stale:
+        for loc in stale:
+            del geocode_cache[loc]
+        any_state_changed = True
+        print(f"[i] pruned stale geocode cache entries: {sorted(stale)}")
+
     # --- Phase 1: check each unique location once, regardless of how many
     # users live there. Result per location: None if there's nothing to
     # report (or the location couldn't be checked yet), else the computed
