@@ -596,7 +596,7 @@ def main():
             print(f"  {name}: already sent for {result['tomorrow_date'].isoformat()}, skipping")
             continue
 
-      if result["has_drop"]:
+        if result["has_drop"]:
             message = result["message"]
             click_url = result["click_url"]
             title = None  # send_ntfy default: "Pressure drop - {location}"
