@@ -441,7 +441,8 @@ def render_alert_page_html(manifest: dict):
 # Notification
 # ---------------------------------------------------------------------------
 
-def send_ntfy(message: str, click_url: str, location_display: str, topic: str):
+def send_ntfy(message: str, click_url: str, location_display: str, topic: str,
+              title: str = None, priority: str = "high"):
     if not topic:
         print("  [!] No ntfy topic configured for this user (check the "
               "USER_TOPICS secret), skipping send. Message would have been:")
@@ -449,8 +450,8 @@ def send_ntfy(message: str, click_url: str, location_display: str, topic: str):
         return
 
     headers = {
-        "Title": f"Pressure drop - {location_display}".encode("utf-8"),
-        "Priority": "high",
+        "Title": (title or f"Pressure drop - {location_display}").encode("utf-8"),
+        "Priority": priority,
     }
     if click_url:
         headers["Click"] = click_url.encode("utf-8")
@@ -545,7 +546,11 @@ def main():
 
         if not events:
             print("  no qualifying drops for tomorrow")
-            location_results[location] = None
+            location_results[location] = {
+                "has_drop": False,
+                "display_name": geo["display_name"],
+                "tomorrow_date": tomorrow_date,
+            }
             continue
 
         events.sort(key=lambda e: e["start"])
@@ -563,6 +568,7 @@ def main():
             click_url = f"{PAGES_BASE_URL}/alerts/{run_utc_date}.html#{location_slug}"
 
         location_results[location] = {
+            "has_drop": True,
             "message": message,
             "click_url": click_url,
             "display_name": geo["display_name"],
@@ -579,19 +585,38 @@ def main():
         if result is None:
             continue
 
-        log_key = f"{name}|{result['tomorrow_date'].isoformat()}"
-        if not args.force and log_key in sent_log:
-            print(f"  {name}: already sent for {result['tomorrow_date'].isoformat()}, skipping")
-            continue
-
         topic = USER_TOPICS.get(name)
         if not topic:
             print(f"  [!] no ntfy topic configured for user {name!r} in "
                   f"USER_TOPICS secret, skipping (add one to send this person alerts)")
             continue
 
+        log_key = f"{name}|{result['tomorrow_date'].isoformat()}"
+        if not args.force and log_key in sent_log:
+            print(f"  {name}: already sent for {result['tomorrow_date'].isoformat()}, skipping")
+            continue
+
+      if result["has_drop"]:
+            message = result["message"]
+            click_url = result["click_url"]
+            title = None  # send_ntfy default: "Pressure drop - {location}"
+            priority = "high"
+        else:
+            # TEMPORARY: daily "all clear" so you know the pipeline is alive
+            # even on days with nothing to alert about. Remove this else
+            # branch (and just `continue` when has_drop is False) once
+            # you've confirmed things are working end-to-end.
+            message = (
+                f"No pressure drop is expected in {result['display_name']} "
+                f"tomorrow ({fmt_date(result['tomorrow_date'])})."
+            )
+            click_url = ""
+            title = "No pressure drop tomorrow!"
+            priority = "default"
+
         if not args.dry_run:
-            send_ntfy(result["message"], result["click_url"], result["display_name"], topic)
+            send_ntfy(message, click_url, result["display_name"], topic,
+                      title=title, priority=priority)
             print(f"  {name}: sent")
         else:
             print(f"  {name}: [dry-run] would POST to ntfy")
