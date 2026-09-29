@@ -1,16 +1,16 @@
 name: Pressure check
 
 on:
-  schedule:
-    # Runs hourly. The script itself decides whether it's currently ~8 PM
-    # local time for any given location before doing real work.
-    - cron: "17 0,2 * * *"
+  # GitHub's own `schedule:` trigger proved unreliable for this repo twice
+  # -- see project notes, "silent non-delivery" incident. Now
+  # triggered by an external cron service (cron-job.org) calling
+  # workflow_dispatch on a schedule instead.
   workflow_dispatch:
     inputs:
       force:
-        description: "Bypass the 8PM-local gating and dedup check"
+        description: "Bypass the evening-local gating and dedup check"
         type: boolean
-        default: true
+        default: false
       only_user:
         description: "Only check this one person (name must match users.json exactly). Leave blank for all."
         type: string
