@@ -73,7 +73,7 @@ SENT_LOG_FILE = ROOT / "state" / "sent_log.json"
 ALERTS_DIR = ROOT / "docs" / "alerts"
 IMG_DIR = ALERTS_DIR / "img"
 PAGES_BASE_URL = os.environ.get("PAGES_BASE_URL", "").rstrip("/")
-NTFY_SERVER = os.environ.get("NTFY_SERVER", "https://ntfy.sh").rstrip("/")
+NTFY_SERVER = "https://ntfy.sh"
 
 
 def _load_json_env(var_name: str, default):
