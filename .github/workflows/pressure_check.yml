@@ -46,7 +46,6 @@ jobs:
         env:
           USERS_JSON: ${{ secrets.USERS_JSON }}
           USER_TOPICS: ${{ secrets.USER_TOPICS }}
-          NTFY_SERVER: ${{ vars.NTFY_SERVER }}
           PAGES_BASE_URL: ${{ vars.PAGES_BASE_URL }}
         run: |
           ARGS=""
