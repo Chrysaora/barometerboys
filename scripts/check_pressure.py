@@ -320,11 +320,11 @@ def format_message(events, tomorrow_date: date) -> str:
         start_s = fmt_time_with_date_if_needed(e["start"], tomorrow_date)
         end_s = fmt_time_with_date_if_needed(e["end"], tomorrow_date)
         return (
-            f"Tomorrow ({date_str}) there will be a sharp pressure drop of "
-            f"{e['drop_inhg']:.2f} between {start_s} and {end_s}"
+            f"Tomorrow ({date_str}) there will be a big pressure drop of "
+            f"{e['drop_inhg']:.2f} hg between {start_s} and {end_s}"
         )
     else:
-        lines = [f"Tomorrow ({date_str}) there will be {len(events)} sharp pressure drops:"]
+        lines = [f"Tomorrow ({date_str}) there will be {len(events)} big pressure drops:"]
         for e in events:
             start_s = fmt_time_with_date_if_needed(e["start"], tomorrow_date)
             end_s = fmt_time_with_date_if_needed(e["end"], tomorrow_date)
@@ -596,23 +596,13 @@ def main():
             print(f"  {name}: already sent for {result['tomorrow_date'].isoformat()}, skipping")
             continue
 
-        if result["has_drop"]:
-            message = result["message"]
-            click_url = result["click_url"]
-            title = None  # send_ntfy default: "Pressure drop - {location}"
-            priority = "high"
-        else:
-            # TEMPORARY: daily "all clear" so you know the pipeline is alive
-            # even on days with nothing to alert about. Remove this else
-            # branch (and just `continue` when has_drop is False) once
-            # you've confirmed things are working end-to-end.
-            message = (
-                f"No pressure drop is expected in {result['display_name']} "
-                f"tomorrow ({fmt_date(result['tomorrow_date'])})."
-            )
-            click_url = ""
-            title = "No pressure drop tomorrow!"
-            priority = "default"
+        if not result["has_drop"]:
+            continue
+
+        message = result["message"]
+        click_url = result["click_url"]
+        title = None  # send_ntfy default: "Pressure drop - {location}"
+        priority = "high"
 
         if not args.dry_run:
             send_ntfy(message, click_url, result["display_name"], topic,
