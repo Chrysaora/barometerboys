@@ -43,11 +43,11 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run pressure check
-          env:
-            USERS_JSON: ${{ secrets.USERS_JSON }}
-            USER_TOPICS: ${{ secrets.USER_TOPICS }}
-            PAGES_BASE_URL: ${{ vars.PAGES_BASE_URL }}
-            NTFY_TOKEN: ${{ secrets.NTFY_TOKEN }}
+        env:
+          USERS_JSON: ${{ secrets.USERS_JSON }}
+          USER_TOPICS: ${{ secrets.USER_TOPICS }}
+          PAGES_BASE_URL: ${{ vars.PAGES_BASE_URL }}
+          NTFY_TOKEN: ${{ secrets.NTFY_TOKEN }}
         run: |
           ARGS=""
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
