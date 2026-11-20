@@ -74,6 +74,7 @@ ALERTS_DIR = ROOT / "docs" / "alerts"
 IMG_DIR = ALERTS_DIR / "img"
 PAGES_BASE_URL = os.environ.get("PAGES_BASE_URL", "").rstrip("/")
 NTFY_SERVER = "https://ntfy.sh"
+NTFY_TOKEN = os.environ.get("NTFY_TOKEN") or ""
 
 
 def _load_json_env(var_name: str, default):
