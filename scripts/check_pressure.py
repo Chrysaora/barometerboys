@@ -456,6 +456,8 @@ def send_ntfy(message: str, click_url: str, location_display: str, topic: str,
     }
     if click_url:
         headers["Click"] = click_url.encode("utf-8")
+    if NTFY_TOKEN:
+        headers["Authorization"] = f"Bearer {NTFY_TOKEN}"
 
     resp = requests.post(
         f"{NTFY_SERVER}/{topic}",
