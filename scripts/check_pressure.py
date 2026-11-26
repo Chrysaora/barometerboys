@@ -545,7 +545,10 @@ def main():
             continue
 
         all_events = find_drop_events(series)
-        events = [e for e in all_events if window_start <= e["start"] < window_end]
+        # Include any drop that overlaps tomorrow, not just ones that start
+        # tomorrow, so a long drop that began tonight is still reported.
+        events = [e for e in all_events
+                  if e["start"] < window_end and e["end"] > window_start]
 
         if not events:
             print("  no qualifying drops for tomorrow")
